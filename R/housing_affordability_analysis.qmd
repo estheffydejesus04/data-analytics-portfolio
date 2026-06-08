@@ -1,0 +1,58 @@
+---
+title: "housing_affordability_analysis"
+format: html
+editor: visual
+---
+
+```{r}
+library("readr")
+library("tidyverse")
+library("ggcorrplot")
+```
+
+```{r}
+df <- read_csv("C:/Users/19786/Downloads/accessibilit-economica-alloggi-26-paesi-1975-2025.csv")
+head(df)
+#making sure data loaded correctly + initial look
+summary(df)
+glimpse(df)
+colSums(is.na(df))# check missing values, data types 
+```
+
+```{r}
+#seeing how disposable income can predict housing affordability
+model1<-lm(affordability_proxy ~real_personal_disposable_income, data = df)
+summary(model1)
+#can house prices and income predict affordability together?
+model2<-lm(affordability_proxy~real_house_price_index + real_personal_disposable_income, data=df)
+summary(model2)
+#observing affordability in selected countries
+selected <-subset(df, country %in% c("Australia", "Germany", "United Kingdom", "France"))
+head(selected)
+```
+
+```{r}
+#in countries in selected, visualizing different characteristics
+ggplot(selected, aes(x=real_personal_disposable_income, y=affordability_proxy))+geom_smooth()
+ggplot(selected, aes(x=personal_disposable_income, y=house_price_index))+geom_smooth()
+ggplot(df, aes(x=real_house_price_index))+geom_histogram(bins=30)+geom_density()
+```
+
+```{r}
+corr<-cor(df$real_personal_disposable_income, df$real_house_price_index, use="complete.obs")
+print(corr)#moderate corr of .57
+numeric_df<-df %>% select(where(is.numeric))
+corr_matrix<-cor(numeric_df, use="complete.obs")
+ggcorrplot(corr_matrix)#strong correlation!
+```
+
+```{r}
+#coefficients
+coef1<-coef(model1)#negative
+coef2<-coef(model2)#positive
+#confidence intervals 
+conf1<-confint(model1)
+conf2<-confint(model2)
+#statistically significant
+print(list(coef1,coef2,conf1,conf2))
+```

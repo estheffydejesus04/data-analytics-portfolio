@@ -1,0 +1,79 @@
+---
+title: "hiit_vs_hypertrophy_analysis"
+format: html
+editor: visual
+---
+
+```{r}
+library("readr")
+library("tidyverse")
+library("ggcorrplot")
+df<-read_csv("C:/Users/19786/Downloads/hiit_vs_hypertrophy_gains.csv")
+#initial look at data 
+head(df)
+glimpse(df)
+summary(df)
+#checking data; missing and data types
+colSums(is.na(df))
+```
+
+You can add options to executable code like this
+
+```{r}
+#see how compliance rate affects final bf pct
+model1<-lm(Final_Body_Fat_Pct ~ Compliance_Rate, data=df)
+summary(model1)
+#increase compliance by 1 unit= decrease bf by 3.48%, but not statistically significant 
+```
+
+```{r}
+#see how gender and age affect final bf pct
+model2<-lm(Final_Body_Fat_Pct~Age + Gender, data=df)
+summary(model2)
+#age and outcome have pos linear relationship + females have higher outcome values so gender is strong predictor
+#visualize
+ggplot(df, aes(x=Age, y=Final_Body_Fat_Pct, color=Gender))+geom_point()+geom_smooth(method="lm")
+```
+
+```{r}
+#correlation matrix to see relationships
+num_df<-df %>% select(where(is.numeric))
+corr_matrix<-cor(num_df, use="complete.obs")
+ggcorrplot(corr_matrix)
+#no strong correlation, only with what is directly related (i.e. initial and final bf and lean mass)
+```
+
+```{r}
+ggplot(df, aes(x=Duration_Weeks, y=Final_Lean_Mass_kg, color=Group))+geom_boxplot()
+#by week 12, hyperthrophy shows the participants with most lean mass 
+ggplot(df, aes(x=Dietary_Condition, y=Final_Lean_Mass_kg,color=Group))+geom_boxplot()
+#overall results: concurrent>hyper>hiit
+
+```
+
+```{r}
+ggplot(df, aes(x=Group, y=Final_Lean_Mass_kg, color=Gender))+geom_boxplot()
+#interesting:different training styles have diff outcomes across gender. female: hyper>hiit>concurrent. male: hyper>concurrent>hiit
+```
+
+```{r}
+#coefficients and confidence intervals
+coef1<-coef(model1)#negative
+coef2<-coef(model2)#positive
+confint1<-confint(model1)#not stat significant
+confint2<-confint(model2)#stat significant
+print(list(coef1,coef2,confint1,confint2))
+```
+
+```{r}
+#predictors interacting with each other
+model3<-lm(VO2_Max_Change_Pct ~ Group * Dietary_Condition, data=df)
+summary(model3) #dietary not stat, hiit increase, hyper decrease 
+model4<-lm(Final_Lean_Mass_kg ~ Group * Dietary_Condition, data=df)
+summary(model4)#not stat significant, suggest more variables influence the outcome
+```
+
+```{}
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
